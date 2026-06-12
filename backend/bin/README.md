@@ -2,6 +2,8 @@
 
 Rich Posts uses ffmpeg to convert browser voice recordings (WebM) to OGG/Opus for Telegram Rich Messages.
 
+**HEIC photos** from iPhone are converted to JPEG via `pillow-heif` (see `requirements.txt`).
+
 **This binary is NOT included in the repository** (77 MB).
 
 ## Options

@@ -71,9 +71,76 @@ def _content_matches_ext(data: bytes, ext: str) -> bool:
         return head[:4] == b"\x1aE\xdf\xa3"
     if ext == ".mp3":
         return head[:3] == b"ID3" or (head[0] == 0xFF and (head[1] & 0xE0) == 0xE0)
-    if ext in (".mp4", ".mov", ".m4v", ".m4a", ".heic", ".heif"):
-        return data[4:8] == b"ftyp"
+    if ext in (".heic", ".heif"):
+        return _ftyp_brand(data) in _HEIC_BRANDS
+    if ext in (".mp4", ".mov", ".m4v", ".m4a"):
+        return _ftyp_brand(data) in _VIDEO_AUDIO_FTYP_BRANDS
     return False
+
+
+_HEIC_BRANDS = frozenset({b"heic", b"heix", b"hevc", b"hevx", b"mif1", b"msf1", b"heif"})
+_VIDEO_AUDIO_FTYP_BRANDS = frozenset(
+    {b"mp42", b"isom", b"iso2", b"avc1", b"qt  ", b"3gp4", b"mp41", b"M4V ", b"M4A "}
+)
+
+
+def _ftyp_brand(data: bytes) -> bytes:
+    if len(data) < 12:
+        return b""
+    if data[4:8] != b"ftyp":
+        return b""
+    return data[8:12]
+
+
+def _sniff_ext(data: bytes) -> str | None:
+    """Определяет реальный формат по содержимому (не по имени файла)."""
+    if len(data) < 12:
+        return None
+    head = data[:16]
+    if head.startswith(b"\xff\xd8\xff"):
+        return ".jpg"
+    if head.startswith(b"\x89PNG\r\n\x1a\n"):
+        return ".png"
+    if head[:6] in (b"GIF87a", b"GIF89a"):
+        return ".gif"
+    if head[:4] == b"RIFF" and data[8:12] == b"WEBP":
+        return ".webp"
+    if head[:4] == b"RIFF" and data[8:12] == b"WAVE":
+        return ".wav"
+    if head[:4] == b"OggS":
+        return ".ogg"
+    if head[:4] == b"\x1aE\xdf\xa3":
+        return ".webm"
+    if head[:3] == b"ID3" or (head[0] == 0xFF and (head[1] & 0xE0) == 0xE0):
+        return ".mp3"
+    brand = _ftyp_brand(data)
+    if brand in _HEIC_BRANDS:
+        return ".heic"
+    if brand in _VIDEO_AUDIO_FTYP_BRANDS:
+        return ".mp4"
+    return None
+
+
+def _kind_for_ext(ext: str) -> str:
+    for kind, exts in _UPLOAD_EXT.items():
+        if ext in exts:
+            return kind
+    raise HTTPException(status_code=400, detail="Неподдерживаемый тип файла")
+
+
+def _resolve_upload_kind_ext(data: bytes, filename: str, content_type: str | None) -> tuple[str, str]:
+    """Сначала смотрим magic bytes — галерея телефона часто шлёт HEIC без расширения .jpg."""
+    sniffed = _sniff_ext(data)
+    if sniffed:
+        return _kind_for_ext(sniffed), sniffed
+    kind = _detect_media_kind(filename, content_type)
+    ext = _safe_upload_ext(filename, kind)
+    if _content_matches_ext(data, ext):
+        return kind, ext
+    raise HTTPException(
+        status_code=400,
+        detail="Не удалось распознать файл. Поддерживаются JPG, PNG, WebP, HEIC, GIF, MP4, MP3, OGG.",
+    )
 
 
 class RichPostMeta(BaseModel):
@@ -324,6 +391,56 @@ def _convert_voice_webm_to_ogg(data: bytes, work_dir: Path) -> bytes:
         dst.unlink(missing_ok=True)
 
 
+def _convert_heic_to_jpeg(data: bytes, work_dir: Path) -> bytes:
+    """iPhone/Android часто отдают HEIC — Telegram Rich Message ожидает JPEG/PNG."""
+    import io
+
+    try:
+        import pillow_heif
+        from PIL import Image
+
+        pillow_heif.register_heif_opener()
+        img = Image.open(io.BytesIO(data))
+        if img.mode not in ("RGB",):
+            img = img.convert("RGB")
+        out = io.BytesIO()
+        img.save(out, format="JPEG", quality=90, optimize=True)
+        return out.getvalue()
+    except Exception as exc:
+        logger.warning("pillow HEIC convert failed: %s", exc)
+
+    ffmpeg = _resolve_ffmpeg()
+    if not ffmpeg:
+        raise HTTPException(
+            status_code=400,
+            detail="Не удалось конвертировать HEIC. Сохраните фото как JPG/PNG или вставьте URL.",
+        )
+    import subprocess
+
+    src = work_dir / "_photo_in.heic"
+    dst = work_dir / "_photo_out.jpg"
+    work_dir.mkdir(parents=True, exist_ok=True)
+    src.write_bytes(data)
+    try:
+        proc = subprocess.run(
+            [str(ffmpeg), "-y", "-i", str(src), "-q:v", "2", str(dst)],
+            capture_output=True,
+            timeout=120,
+            check=False,
+        )
+        if proc.returncode != 0 or not dst.is_file():
+            err = (proc.stderr or b"")[-400:].decode("utf-8", "replace")
+            logger.warning("ffmpeg heic convert failed: %s", err)
+            raise HTTPException(
+                status_code=400,
+                detail="Не удалось конвертировать HEIC. Сохраните фото как JPG и попробуйте снова.",
+            )
+        return dst.read_bytes()
+    finally:
+        src.unlink(missing_ok=True)
+        dst.unlink(missing_ok=True)
+
+
 @router.post("/upload", response_model=RichPostUploadResponse)
 async def rich_posts_upload(
     request: Request,
@@ -351,8 +468,6 @@ async def rich_posts_upload(
     if safe_name != file.filename or ".." in safe_name or safe_name.startswith("."):
         raise HTTPException(status_code=400, detail="Некорректное имя файла")
 
-    kind = _detect_media_kind(safe_name, file.content_type)
-    ext = _safe_upload_ext(safe_name, kind)
     data = await file.read(settings.UPLOAD_MAX_BYTES + 1)
     size = len(data)
     if size <= 0:
@@ -360,8 +475,7 @@ async def rich_posts_upload(
     if size > settings.UPLOAD_MAX_BYTES:
         raise HTTPException(status_code=413, detail="Файл слишком большой (макс. 50 МБ)")
 
-    if not _content_matches_ext(data, ext):
-        raise HTTPException(status_code=400, detail="Содержимое файла не соответствует типу")
+    kind, ext = _resolve_upload_kind_ext(data, safe_name, file.content_type)
 
     if storage.user_upload_bytes(tg_id) + size > settings.UPLOAD_USER_QUOTA_BYTES:
         raise HTTPException(
@@ -372,6 +486,13 @@ async def rich_posts_upload(
     token = secrets.token_urlsafe(12)
     user_dir = settings.UPLOAD_DIR / str(tg_id) / token
     user_dir.mkdir(parents=True, exist_ok=True)
+
+    if kind == "photo" and ext in (".heic", ".heif"):
+        async with _FFMPEG_SEM:
+            data = await asyncio.to_thread(_convert_heic_to_jpeg, data, user_dir)
+        ext = ".jpg"
+        kind = "photo"
+        size = len(data)
 
     if kind == "voice" and ext == ".webm":
         async with _FFMPEG_SEM:
