@@ -17,7 +17,7 @@ TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
 DEFAULT_CHAT_ID = int(os.getenv("DEMO_CHAT_ID", "0") or "0")
 
 RICH_DEMO_RU = r"""
-# Rich Messages · Georgia App
+# Rich Messages · Demo
 
 **Bot API 10.1** — одно сообщение бота как мини-статья в чате.
 
@@ -43,9 +43,9 @@ RICH_DEMO_RU = r"""
 
 $x^2+y^2$ · sub<sub>2</sub> · sup<sup>2</sup>
 
-[Документация](https://core.telegram.org/bots/api-changelog) · [почта](mailto:hello@georgiaapp.ge) · [телефон](tel:+995555123456)
+[Документация Bot API](https://core.telegram.org/bots/api-changelog) · [пример](https://example.com)
 
-#GeorgiaApp · $USD · +995555123456 · @georgiaapp_bot · /start
+#RichPosts · $USD · @RichMessages_bot · /start
 
 ---
 
@@ -59,21 +59,21 @@ $x^2+y^2$ · sub<sub>2</sub> · sup<sup>2</sup>
 - [x] готово
 
 ```python
-print("Georgia App · Rich Message")
+print("Rich Posts · Rich Message")
 ```
 
 > Цитата для акцентов и пояснений.
 
-<aside cite="Georgia App">Pull-quote — выделенная мысль по центру</aside>
+<aside cite="Rich Posts">Pull-quote — выделенная мысль по центру</aside>
 
 ---
 
 ## Таблица и формулы
 
-| Сервис | Статус |
-|:-------|:------:|
-| Штрафы | live |
-| SuperApp | live |
+| Блок | Статус |
+|:-----|:------:|
+| Текст | ✅ |
+| Медиа | ✅ |
 
 Inline: $E=mc^2$
 
