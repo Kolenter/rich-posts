@@ -12,6 +12,7 @@ from app import storage
 from app.config import settings
 from app.rich_posts import router as rich_posts_router, warmup_emoji_index
 from app.telegram_webhook import configure_bot, router as telegram_webhook_router
+from app.admin import router as admin_router
 from app.security import ApiRateLimitMiddleware, SecurityHeadersMiddleware
 
 logging.basicConfig(level=logging.INFO)
@@ -45,6 +46,7 @@ app.add_middleware(
 
 app.include_router(rich_posts_router)
 app.include_router(telegram_webhook_router)
+app.include_router(admin_router)
 
 
 @app.exception_handler(Exception)

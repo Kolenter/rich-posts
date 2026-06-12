@@ -160,7 +160,7 @@ sudo systemctl enable --now rich-posts-backend
 | `UPLOAD_RATE_LIMIT_PER_MINUTE` | Лимит загрузок на пользователя |
 | `PUBLISH_RATE_LIMIT_PER_MINUTE` | Лимит публикаций на пользователя |
 | `PUBLISH_ALLOWED_CHANNELS` | Опционально: whitelist каналов для publish |
-| `ADMIN_IDS` | Telegram user id админов (зарезервировано) |
+| `ADMIN_IDS` | Telegram user id админов — команды `/stats`, `/admin` и дашборд Mini App |
 
 Frontend (при сборке):
 

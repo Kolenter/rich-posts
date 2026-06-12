@@ -58,7 +58,7 @@ Currently any authenticated Telegram user can:
 
 The bot must also be an administrator of the target channel with permission to post messages.
 
-`ADMIN_IDS` is reserved for future admin-only features.
+`ADMIN_IDS` enables bot commands `/stats` and `/admin` plus the in-app admin dashboard (`?admin=1`). Only listed Telegram user ids receive stats; the dashboard API uses the same check.
 
 ## Rate Limiting
 

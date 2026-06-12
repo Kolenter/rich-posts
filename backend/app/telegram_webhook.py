@@ -9,6 +9,7 @@ from fastapi.responses import JSONResponse
 
 from app.config import settings
 from app.telegram_client import telegram_api
+from app.users import dashboard_stats, format_stats_text, touch_from_message
 
 logger = logging.getLogger("rich-posts-api")
 
@@ -46,6 +47,37 @@ def _start_keyboard() -> dict[str, Any]:
             ],
         ]
     }
+
+
+def _is_admin(tg_id: int) -> bool:
+    return tg_id in settings.ADMIN_IDS
+
+
+def _admin_dashboard_keyboard() -> dict[str, Any]:
+    url = _miniapp_url()
+    if url:
+        url = f"{url}?admin=1"
+    rows: list[list[dict[str, Any]]] = []
+    if url:
+        rows.append([{"text": "📊 Открыть дашборд", "web_app": {"url": url}}])
+    return {"inline_keyboard": rows} if rows else {}
+
+
+async def _send_admin_stats(chat_id: int) -> None:
+    token = settings.TELEGRAM_BOT_TOKEN
+    if not token:
+        return
+    stats = dashboard_stats()
+    payload: dict[str, Any] = {
+        "chat_id": chat_id,
+        "text": format_stats_text(stats),
+        "parse_mode": "HTML",
+        "disable_web_page_preview": True,
+    }
+    markup = _admin_dashboard_keyboard()
+    if markup.get("inline_keyboard"):
+        payload["reply_markup"] = markup
+    await telegram_api(token, "sendMessage", payload)
 
 
 def _verify_webhook_secret(provided: str) -> None:
@@ -90,6 +122,18 @@ async def configure_bot() -> None:
                 ]
             },
         )
+        for admin_id in settings.ADMIN_IDS:
+            await telegram_api(
+                token,
+                "setMyCommands",
+                {
+                    "commands": [
+                        {"command": "stats", "description": "Статистика бота"},
+                        {"command": "admin", "description": "Дашборд"},
+                    ],
+                    "scope": {"type": "chat", "chat_id": admin_id},
+                },
+            )
     except RuntimeError as exc:
         logger.warning("setMyCommands: %s", exc)
 
@@ -164,10 +208,46 @@ async def telegram_webhook(request: Request):
     if not isinstance(chat_id, int) or chat_id == 0:
         return JSONResponse({"ok": True})
 
-    if text.split()[0].split("@")[0].lower() == "/start":
+    from_user = message.get("from")
+    user_id = from_user.get("id") if isinstance(from_user, dict) else None
+    cmd = text.split()[0].split("@")[0].lower() if text else ""
+
+    if cmd == "/start":
+        touch_from_message(message, event="start")
         try:
             await send_start_welcome(chat_id)
         except RuntimeError as exc:
             logger.warning("/start reply failed chat=%s: %s", chat_id, exc)
+    elif cmd in ("/stats", "/admin") and isinstance(user_id, int) and _is_admin(user_id):
+        try:
+            if cmd == "/admin":
+                token = settings.TELEGRAM_BOT_TOKEN
+                if token:
+                    stats = dashboard_stats()
+                    markup = _admin_dashboard_keyboard()
+                    payload: dict[str, Any] = {
+                        "chat_id": chat_id,
+                        "text": format_stats_text(stats),
+                        "parse_mode": "HTML",
+                        "disable_web_page_preview": True,
+                    }
+                    if markup.get("inline_keyboard"):
+                        payload["reply_markup"] = markup
+                    await telegram_api(token, "sendMessage", payload)
+            else:
+                await _send_admin_stats(chat_id)
+        except RuntimeError as exc:
+            logger.warning("admin command failed chat=%s: %s", chat_id, exc)
+    elif cmd in ("/stats", "/admin"):
+        token = settings.TELEGRAM_BOT_TOKEN
+        if token and isinstance(user_id, int):
+            try:
+                await telegram_api(
+                    token,
+                    "sendMessage",
+                    {"chat_id": chat_id, "text": "Команда только для администратора."},
+                )
+            except RuntimeError:
+                pass
 
     return JSONResponse({"ok": True})

@@ -19,6 +19,7 @@ from app.auth import get_current_user
 from app.config import settings
 from app.security import audit_log, check_draft_rate_limit, check_publish_rate_limit, check_upload_rate_limit
 from app import storage
+from app.users import touch_user
 
 logger = logging.getLogger("rich-posts-api")
 
@@ -205,7 +206,17 @@ async def _require_can_publish_to_channel(user_tg_id: int, target_chat: str | in
 
 
 @router.get("/meta", response_model=RichPostMeta)
-async def rich_posts_meta(_user: dict = Depends(get_current_user)):
+async def rich_posts_meta(user: dict = Depends(get_current_user)):
+    touch_user(
+        int(user["tg_id"]),
+        profile={
+            "username": user.get("username"),
+            "first_name": user.get("first_name"),
+            "last_name": user.get("last_name"),
+            "language_code": user.get("language_code"),
+        },
+        event="app",
+    )
     bot_username = ""
     try:
         me = await _telegram_post(_bot_token(), "getMe", {})
@@ -322,6 +333,16 @@ async def rich_posts_upload(
     """Загрузка медиа с телефона → публичный HTTPS URL для Rich Message markdown."""
     tg_id = int(user["tg_id"])
     check_upload_rate_limit(tg_id)
+    touch_user(
+        tg_id,
+        profile={
+            "username": user.get("username"),
+            "first_name": user.get("first_name"),
+            "last_name": user.get("last_name"),
+            "language_code": user.get("language_code"),
+        },
+        event="upload",
+    )
 
     if not file.filename:
         raise HTTPException(status_code=400, detail="Файл не выбран")
@@ -461,6 +482,16 @@ async def rich_posts_draft(
     markdown = _validate_markdown(body.markdown)
     chat_id = int(user["tg_id"])
     check_draft_rate_limit(chat_id)
+    touch_user(
+        chat_id,
+        profile={
+            "username": user.get("username"),
+            "first_name": user.get("first_name"),
+            "last_name": user.get("last_name"),
+            "language_code": user.get("language_code"),
+        },
+        event="preview",
+    )
     token = _bot_token()
 
     prev_id = _preview_message_ids.get(chat_id)
@@ -504,11 +535,32 @@ async def rich_posts_send(
     user: dict = Depends(get_current_user),
 ):
     markdown = _validate_markdown(body.markdown)
+    user_id = int(user["tg_id"])
     if body.mode == "preview":
-        target_chat = int(user["tg_id"])
-        check_draft_rate_limit(int(user["tg_id"]))
+        target_chat = user_id
+        check_draft_rate_limit(user_id)
+        touch_user(
+            user_id,
+            profile={
+                "username": user.get("username"),
+                "first_name": user.get("first_name"),
+                "last_name": user.get("last_name"),
+                "language_code": user.get("language_code"),
+            },
+            event="preview",
+        )
     else:
-        check_publish_rate_limit(int(user["tg_id"]))
+        check_publish_rate_limit(user_id)
+        touch_user(
+            user_id,
+            profile={
+                "username": user.get("username"),
+                "first_name": user.get("first_name"),
+                "last_name": user.get("last_name"),
+                "language_code": user.get("language_code"),
+            },
+            event="publish",
+        )
         channel = (body.chat_id or settings.RICH_POSTS_DEFAULT_CHANNEL or "").strip()
         target_chat = _normalize_chat_id(channel)
         await _require_can_publish_to_channel(int(user["tg_id"]), target_chat)
