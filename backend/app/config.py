@@ -22,6 +22,26 @@ def _parse_csv(raw: str) -> list[str]:
     return [p.strip() for p in (raw or "").split(",") if p.strip()]
 
 
+def _default_upload_public_base() -> str:
+    explicit = os.getenv("RICH_POSTS_UPLOAD_PUBLIC_BASE", "").strip().rstrip("/")
+    if explicit:
+        return explicit
+    mini = os.getenv("MINIAPP_URL", "").strip().rstrip("/")
+    if mini:
+        return f"{mini}/uploads"
+    return ""
+
+
+def _default_webhook_url() -> str:
+    explicit = os.getenv("WEBHOOK_URL", "").strip()
+    if explicit:
+        return explicit
+    mini = os.getenv("MINIAPP_URL", "").strip().rstrip("/")
+    if mini:
+        return f"{mini}/api/v1/telegram/webhook"
+    return ""
+
+
 class Settings:
     PROJECT_NAME = os.getenv("RICH_POSTS_PROJECT_NAME", "Rich Posts API")
     VERSION = "1.0.2"
@@ -35,7 +55,7 @@ class Settings:
     ADMIN_IDS: list[int] = _parse_admin_ids(os.getenv("ADMIN_IDS", ""))
     RICH_POSTS_DEFAULT_CHANNEL: str = os.getenv("RICH_POSTS_DEFAULT_CHANNEL", "").strip()
     MINIAPP_URL: str = os.getenv("MINIAPP_URL", "").strip()
-    WEBHOOK_URL: str = os.getenv("WEBHOOK_URL", "").strip()
+    WEBHOOK_URL: str = _default_webhook_url()
     WEBHOOK_SECRET: str = os.getenv("WEBHOOK_SECRET", "").strip()
 
     # Безопасность
@@ -64,7 +84,7 @@ class Settings:
 
     UPLOAD_DIR: Path = Path(os.getenv("RICH_POSTS_UPLOAD_DIR", str(_ROOT / "uploads")))
     UPLOAD_MAX_BYTES: int = int(os.getenv("RICH_POSTS_UPLOAD_MAX_BYTES", str(50 * 1024 * 1024)))
-    UPLOAD_PUBLIC_BASE: str = os.getenv("RICH_POSTS_UPLOAD_PUBLIC_BASE", "").rstrip("/")
+    UPLOAD_PUBLIC_BASE: str = _default_upload_public_base()
     # Срок хранения загруженных файлов (сек); по умолчанию 4 часа. Файлы также удаляются после публикации.
     UPLOAD_RETENTION_SEC: int = int(os.getenv("RICH_POSTS_UPLOAD_RETENTION_SEC", str(4 * 60 * 60)))
     # Мягкая квота на пользователя в окне хранения (защита от заполнения диска)
