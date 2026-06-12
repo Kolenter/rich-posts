@@ -34,19 +34,16 @@ class Settings:
     TELEGRAM_BOT_TOKEN: str = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
     ADMIN_IDS: list[int] = _parse_admin_ids(os.getenv("ADMIN_IDS", ""))
     RICH_POSTS_DEFAULT_CHANNEL: str = os.getenv("RICH_POSTS_DEFAULT_CHANNEL", "").strip()
-    MINIAPP_URL: str = os.getenv("MINIAPP_URL", "https://rich.helito.ge/")
-    WEBHOOK_URL: str = os.getenv(
-        "WEBHOOK_URL",
-        "https://rich.helito.ge/api/v1/telegram/webhook",
-    ).strip()
+    MINIAPP_URL: str = os.getenv("MINIAPP_URL", "").strip()
+    WEBHOOK_URL: str = os.getenv("WEBHOOK_URL", "").strip()
     WEBHOOK_SECRET: str = os.getenv("WEBHOOK_SECRET", "").strip()
 
     # Безопасность
     ALLOWED_ORIGINS: list[str] = _parse_csv(
-        os.getenv("ALLOWED_ORIGINS", "https://rich.helito.ge")
+        os.getenv("ALLOWED_ORIGINS", "http://localhost:5185,http://127.0.0.1:5185")
     )
     TRUSTED_HOSTS: list[str] = _parse_csv(
-        os.getenv("TRUSTED_HOSTS", "rich.helito.ge,127.0.0.1,localhost")
+        os.getenv("TRUSTED_HOSTS", "127.0.0.1,localhost")
     )
     INIT_DATA_MAX_AGE_SEC: int = int(os.getenv("INIT_DATA_MAX_AGE_SEC", str(24 * 60 * 60)))
     INIT_DATA_MAX_LEN: int = int(os.getenv("INIT_DATA_MAX_LEN", "8192"))
@@ -67,7 +64,7 @@ class Settings:
 
     UPLOAD_DIR: Path = Path(os.getenv("RICH_POSTS_UPLOAD_DIR", str(_ROOT / "uploads")))
     UPLOAD_MAX_BYTES: int = int(os.getenv("RICH_POSTS_UPLOAD_MAX_BYTES", str(50 * 1024 * 1024)))
-    UPLOAD_PUBLIC_BASE: str = os.getenv("RICH_POSTS_UPLOAD_PUBLIC_BASE", "https://rich.helito.ge/uploads").rstrip("/")
+    UPLOAD_PUBLIC_BASE: str = os.getenv("RICH_POSTS_UPLOAD_PUBLIC_BASE", "").rstrip("/")
     # Срок хранения загруженных файлов (сек); по умолчанию 4 часа. Файлы также удаляются после публикации.
     UPLOAD_RETENTION_SEC: int = int(os.getenv("RICH_POSTS_UPLOAD_RETENTION_SEC", str(4 * 60 * 60)))
     # Мягкая квота на пользователя в окне хранения (защита от заполнения диска)

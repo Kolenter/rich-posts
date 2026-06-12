@@ -27,7 +27,9 @@ START_HTML = """<b>👋 Добро пожаловать в Rich Posts</b>
 
 
 def _miniapp_url() -> str:
-    url = (settings.MINIAPP_URL or "https://rich.helito.ge/").strip()
+    url = settings.MINIAPP_URL.strip()
+    if not url:
+        return ""
     if not url.endswith("/"):
         url += "/"
     return url

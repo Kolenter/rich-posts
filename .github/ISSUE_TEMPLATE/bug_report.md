@@ -28,7 +28,7 @@ assignees: ''
 
 - Rich Posts version / commit:
 - Browser / Telegram client (iOS, Android, Desktop):
-- Self-hosted or demo (rich.helito.ge):
+- Self-hosted (your domain) or @RichMessages_bot demo:
 - Backend OS:
 
 ## Logs (if applicable)

@@ -32,7 +32,7 @@ app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(ApiRateLimitMiddleware)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.ALLOWED_ORIGINS or ["https://rich.helito.ge"],
+    allow_origins=settings.ALLOWED_ORIGINS or ["http://localhost:5185", "http://127.0.0.1:5185"],
     allow_credentials=False,
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["Content-Type", "X-Telegram-Init-Data"],
@@ -40,7 +40,7 @@ app.add_middleware(
 )
 app.add_middleware(
     TrustedHostMiddleware,
-    allowed_hosts=settings.TRUSTED_HOSTS or ["rich.helito.ge"],
+    allowed_hosts=settings.TRUSTED_HOSTS or ["127.0.0.1", "localhost"],
 )
 
 app.include_router(rich_posts_router)

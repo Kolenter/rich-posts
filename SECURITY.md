@@ -128,7 +128,7 @@ Telegram webhook ([backend/app/telegram_webhook.py](backend/app/telegram_webhook
 
 ## Network Hardening
 
-Recommended nginx rules ([nginx/rich.helito.ge.conf](nginx/rich.helito.ge.conf)):
+Recommended nginx rules ([nginx/rich-posts.conf](nginx/rich-posts.conf)):
 
 - Deny dotfiles (`.env`, `.git`)
 - Block common scanner paths

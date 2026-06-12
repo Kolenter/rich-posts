@@ -98,16 +98,16 @@ include /opt/rich-posts/nginx/rich-posts-limits.conf;
 
 ### Site config
 
-Copy and adapt `nginx/rich.helito.ge.conf`:
+Copy and adapt `nginx/rich-posts.conf`:
 
 ```bash
-sudo cp nginx/rich.helito.ge.conf /etc/nginx/sites-available/rich-posts
+sudo cp nginx/rich-posts.conf /etc/nginx/sites-available/rich-posts
 ```
 
 Replace in the config:
 
-- `rich.helito.ge` → your domain
-- `/opt/SuperAPP/RichPosts` → `/opt/rich-posts`
+- `your.domain` → your domain
+- `/opt/rich-posts` → your install path
 - SSL certificate paths (Let's Encrypt)
 
 Enable site:

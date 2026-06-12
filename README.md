@@ -12,11 +12,9 @@
 
 ## Демо
 
-| | |
-|---|---|
-| **Бот** | [@RichMessages_bot](https://t.me/RichMessages_bot) |
-| **Mini App** | [rich.helito.ge](https://rich.helito.ge/) |
-| **API** | `https://rich.helito.ge/api/` |
+Живой пример — бот [@RichMessages_bot](https://t.me/RichMessages_bot) (откройте Mini App из меню бота).
+
+Свой инстанс разворачиваете на **своём домене** — см. [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). URL API и Mini App задаются в `.env`, в репозитории чужих серверов нет.
 
 ## Возможности
 
