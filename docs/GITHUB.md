@@ -27,7 +27,7 @@ EOF
 )"
 
 # На GitHub: New repository → rich-posts (без README, license уже есть)
-git remote add origin git@github.com:YOUR_ORG/rich-posts.git
+git remote add origin git@github.com:Kolenter/rich-posts.git
 git branch -M main
 git push -u origin main
 ```
