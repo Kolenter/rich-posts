@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>Rich Posts</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+      #browser-gate {
+        display: none;
+        min-height: 100vh;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        padding: 24px;
+        text-align: center;
+        font-family: system-ui, -apple-system, sans-serif;
+        background: #f5f4fa;
+        color: #0f172a;
+      }
+      #browser-gate.visible { display: flex; }
+      #browser-gate h1 { font-size: 20px; font-weight: 800; margin: 16px 0 8px; }
+      #browser-gate p { font-size: 14px; color: #64748b; max-width: 320px; line-height: 1.5; }
+      #browser-gate a {
+        margin-top: 24px;
+        display: inline-block;
+        padding: 12px 20px;
+        border-radius: 16px;
+        background: #517da2;
+        color: #fff;
+        font-weight: 700;
+        text-decoration: none;
+      }
+    </style>
+    <script>
+      (function () {
+        var MIN_TOP = 48;
+        function num(v) {
+          return typeof v === 'number' && !isNaN(v) ? v : 0;
+        }
+        function applyTelegramSafeArea() {
+          var tg = window.Telegram?.WebApp;
+          if (!tg) return;
+          var platform = (tg.platform || '').toLowerCase();
+          var isMobile = platform === 'ios' || platform === 'android' || platform === 'android_x';
+          if (!isMobile) {
+            document.documentElement.style.setProperty('--superapp-safe-top', '0px');
+            document.documentElement.style.setProperty('--superapp-safe-bottom', '0px');
+            return;
+          }
+          var sa = tg.safeAreaInset || {};
+          var csa = tg.contentSafeAreaInset || {};
+          var top = num(sa.top) + num(csa.top);
+          if (tg.isFullscreen && top < 48) top = Math.max(top, 52);
+          else if (top > 0 && top < 48) top = Math.max(top, 48);
+          var bottom = num(sa.bottom) + num(csa.bottom);
+          var root = document.documentElement;
+          root.style.setProperty('--superapp-safe-top', top + 'px');
+          root.style.setProperty('--superapp-safe-bottom', bottom + 'px');
+          root.style.setProperty('--tg-viewport-height', (tg.viewportHeight || window.innerHeight) + 'px');
+        }
+
+        function initTelegramShell() {
+          var tg = window.Telegram?.WebApp;
+          if (!tg) return;
+          var platform = (tg.platform || '').toLowerCase();
+          var isMobile = platform === 'ios' || platform === 'android' || platform === 'android_x';
+          tg.ready();
+          tg.expand();
+          if (tg.BackButton && tg.BackButton.hide) tg.BackButton.hide();
+          try {
+            if (tg.setHeaderColor) tg.setHeaderColor('bg_color');
+            if (tg.setBackgroundColor) tg.setBackgroundColor('#f5f4fa');
+          } catch (e) {}
+          applyTelegramSafeArea();
+          tg.onEvent('viewportChanged', applyTelegramSafeArea);
+          tg.onEvent('safeAreaChanged', applyTelegramSafeArea);
+          tg.onEvent('contentSafeAreaChanged', applyTelegramSafeArea);
+          tg.onEvent('fullscreenChanged', applyTelegramSafeArea);
+          if (isMobile) {
+            if (typeof tg.disableVerticalSwipes === 'function') tg.disableVerticalSwipes();
+            if (typeof tg.requestFullscreen === 'function') {
+              try { tg.requestFullscreen(); } catch (e) {}
+            }
+          }
+        }
+
+        function isTelegramMiniApp() {
+          var tg = window.Telegram && window.Telegram.WebApp;
+          if (!tg) return false;
+          var initData = (tg.initData || '').trim();
+          if (!initData) return false;
+          var unsafe = tg.initDataUnsafe || {};
+          if (!unsafe.auth_date || !unsafe.user || !unsafe.user.id) return false;
+          return true;
+        }
+
+        function blockBrowserAccess() {
+          var gate = document.getElementById('browser-gate');
+          var root = document.getElementById('root');
+          if (gate) gate.classList.add('visible');
+          if (root) root.style.display = 'none';
+        }
+
+        if (isTelegramMiniApp()) {
+          initTelegramShell();
+        } else {
+          blockBrowserAccess();
+        }
+      })();
+    </script>
+  </head>
+  <body class="bg-gray-50 text-gray-900">
+    <div id="browser-gate" aria-live="polite">
+      <div style="width:64px;height:64px;border-radius:16px;background:#0f172a;color:#fff;display:flex;align-items:center;justify-content:center;font-size:28px;">🔒</div>
+      <h1>Только через Telegram</h1>
+      <p>Rich Posts доступен только как Mini App внутри Telegram. Открытие в обычном браузере запрещено.</p>
+      <a href="https://t.me/RichMessages_bot">Открыть @RichMessages_bot</a>
+    </div>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

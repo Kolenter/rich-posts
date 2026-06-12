@@ -1,0 +1,146 @@
+html,
+body {
+  min-height: var(--tg-viewport-height, 100dvh);
+}
+
+#root {
+  min-height: var(--tg-viewport-height, 100dvh);
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 0 0% 100%;
+  --foreground: 222.2 84% 4.9%;
+  --primary: 221.2 83.2% 53.3%;
+  --primary-foreground: 210 40% 98%;
+  --border: 214.3 31.8% 91.4%;
+  --input: 214.3 31.8% 91.4%;
+  --ring: 221.2 83.2% 53.3%;
+  --radius: 1rem;
+  --superapp-safe-top: 0px;
+  --superapp-chrome-offset: 0px;
+  --superapp-chrome-height: 48px;
+  --superapp-safe-bottom: 0px;
+  --superapp-safe-left: 0px;
+  --superapp-safe-right: 0px;
+  --tg-viewport-height: 100dvh;
+}
+
+html {
+  padding-left: var(--superapp-safe-left, 0px);
+  padding-right: var(--superapp-safe-right, 0px);
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  background-color: #f5f4fa;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+textarea,
+input:not([type='checkbox']):not([type='radio']) {
+  user-select: text;
+  -webkit-user-select: text;
+  font-size: 16px;
+}
+
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+
+.safe-pb {
+  padding-bottom: calc(var(--superapp-safe-bottom, 0px) + env(safe-area-inset-bottom, 16px));
+}
+
+.safe-pt {
+  padding-top: calc(var(--superapp-safe-top, 0px) + 8px) !important;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+@layer components {
+  /** Основная колонка: на телефоне узко, на десктопе растягивается. */
+  .app-shell {
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    max-width: min(100%, 28rem);
+  }
+
+  @media (min-width: 768px) {
+    .app-shell {
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+      max-width: min(100%, 48rem);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .app-shell {
+      max-width: min(100%, 72rem);
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .app-shell {
+      max-width: min(100%, 80rem);
+    }
+  }
+
+  /** Модалки: на десктопе шире, но не на весь экран. */
+  .app-shell-modal {
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    max-width: min(100%, 28rem);
+  }
+
+  @media (min-width: 768px) {
+    .app-shell-modal {
+      max-width: min(100%, 36rem);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .app-shell-modal {
+      max-width: min(100%, 42rem);
+    }
+  }
+
+  .editor-wide-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.5rem;
+    align-items: start;
+  }
+
+  @media (min-width: 1024px) {
+    .editor-wide-grid {
+      grid-template-columns: minmax(0, 1fr) min(420px, 38%);
+    }
+  }
+}

@@ -1,0 +1,48 @@
+# Environment and secrets
+backend/.env
+.env
+.env.local
+*.pem
+
+# Python
+backend/venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Node
+frontend/node_modules/
+frontend/dist/
+
+# Runtime data
+backend/uploads/
+backend/data/
+uploads/
+data/
+
+# Bundled ffmpeg (77MB — install via apt or set FFMPEG_PATH)
+backend/bin/ffmpeg
+
+# IDE and OS
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Coverage
+htmlcov/
+.coverage
+coverage/
